@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 PLOT = True
+alpha = 0.75
+beta = 0.4
+eps = 0.001
 
 class Vertex(object):
     def __init__(self, name='', y=None, neighs=None, in_msgs=None):
@@ -24,12 +27,26 @@ class Vertex(object):
     def rem_neigh(self,vertex):
         self._neighs.remove(vertex)
     def get_belief(self):
-        return
+        max_prod = np.array([1.0, 1.0])
+        for neigh in self._neighs:
+            max_prod *= self._in_msgs[neigh]
+        max_prod *= psi1(-1, self._y), psi1(1, self._y)
+        return -1 if max_prod[0] > max_prod[1] else 1
+
     def snd_msg(self,neigh):
         """ Combines messages from all other neighbours
             to propagate a message to the neighbouring Vertex 'neigh'.
         """
-        return
+        # Combine messages from all other neighbors to self
+        msg = np.array([psi1(-1, self._y), psi1(1, self._y)])
+        for v in self._neighs:
+            if v != neigh:
+                msg *= self._in_msgs[v]
+
+        neigh._in_msgs[self][0] = max(msg[0] * psi2(-1, -1), msg[1] * psi2(1, -1))
+        neigh._in_msgs[self][1] = max(msg[0] * psi2(-1, 1), msg[1] * psi2(1, 1))
+        denom = np.sum(neigh._in_msgs[self])
+        neigh._in_msgs[self] /= denom
 
     def __str__(self):
         ret = "Name: "+self._name
@@ -130,8 +147,22 @@ def grid2mat(grid,n,m):
     for v in l:
         i = int(v._name[1:])
         row,col = (i//m,i%m)
-        mat[row][col] = 2017 # you should change this of course
+        mat[row][col] = v.get_belief() 
     return mat
+
+def psi1(xi, yi):
+    return np.exp(alpha * xi * yi)
+
+def psi2(xi, xj):
+    return np.exp(beta * xi * xj)
+
+def init_msgs(g):
+    l = g.vertices()
+    for v in l:
+        for neigh in v._neighs:
+            msg_neg = max(psi1(-1, neigh._y) * psi2(-1, -1), psi1(1, neigh._y) * psi2(1, -1))
+            msg_pos = max(psi1(-1, neigh._y) * psi2(-1, 1), psi1(1, neigh._y) * psi2(1, 1))
+            v._in_msgs[neigh] = np.array([msg_neg, msg_pos])
 
 def main():
     # begin:
@@ -153,10 +184,7 @@ def main():
 
     # build grid:
     g = build_grid_graph(n, m, image)
-
-    # process grid:
-    # here you should do stuff to recover the image...
-   
+    lbp(g)
     # convert grid to image: 
     infered_img = grid2mat(g, n, m)
     if PLOT:
@@ -166,6 +194,14 @@ def main():
     # save result to output file
     out_file_name = sys.argv[2]
     misc.toimage(infered_img).save(out_file_name + '.png')
+
+# Loopy belief propagation
+def lbp(g):
+    init_msgs(g)
+    l = sorted(g.vertices(), key=lambda v: int(v._name[1:]))
+    for v in l:
+        for neigh in v._neighs:
+            v.snd_msg(neigh)
 
 if __name__ == "__main__":
     main()
