@@ -11,7 +11,7 @@ import numpy as np
 
 PLOT = True
 alpha = 0.75
-beta = 0.4
+beta = 0.45
 eps = 0.001
 
 class Vertex(object):
@@ -27,6 +27,7 @@ class Vertex(object):
     def rem_neigh(self,vertex):
         self._neighs.remove(vertex)
     def get_belief(self):
+        # Compute the approximate MAP (max aposteriori probability) for 'self' 
         max_prod = np.array([1.0, 1.0])
         for neigh in self._neighs:
             max_prod *= self._in_msgs[neigh]
@@ -37,14 +38,18 @@ class Vertex(object):
         """ Combines messages from all other neighbours
             to propagate a message to the neighbouring Vertex 'neigh'.
         """
-        # Combine messages from all other neighbors to self
+        # Compute message from self to 'neigh' - mij(xj)
         msg = np.array([psi1(-1, self._y), psi1(1, self._y)])
+        # Combine messages from all other neighbors (i.e. exluding 'neigh') to self
         for v in self._neighs:
             if v != neigh:
                 msg *= self._in_msgs[v]
 
+        # Maximize over xi (self)
         neigh._in_msgs[self][0] = max(msg[0] * psi2(-1, -1), msg[1] * psi2(1, -1))
         neigh._in_msgs[self][1] = max(msg[0] * psi2(-1, 1), msg[1] * psi2(1, 1))
+
+        # Normalize each message
         denom = np.sum(neigh._in_msgs[self])
         neigh._in_msgs[self] /= denom
 
@@ -150,9 +155,11 @@ def grid2mat(grid,n,m):
         mat[row][col] = v.get_belief() 
     return mat
 
+# the data term
 def psi1(xi, yi):
     return np.exp(alpha * xi * yi)
 
+# the smoothness term
 def psi2(xi, xj):
     return np.exp(beta * xi * xj)
 
@@ -198,6 +205,7 @@ def main():
 # Loopy belief propagation
 def lbp(g):
     init_msgs(g)
+    # Choose row by row ordering
     l = sorted(g.vertices(), key=lambda v: int(v._name[1:]))
     for v in l:
         for neigh in v._neighs:
