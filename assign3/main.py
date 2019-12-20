@@ -4,27 +4,35 @@ import util
 import vis
 from scipy.sparse.csgraph import minimum_spanning_tree
 from collections import defaultdict
+import os
 
 np.set_printoptions(precision=4)
 pd.set_option('precision', 2)
 
+SEP = os.sep
+
+def gen_full_path(dir, file):
+    return SEP.join([dir, file])
 
 def main():
     vocabolary_threshold = 400
     # open image dataset
-    oid_data = 'data\\annotations-machine.csv'
-    classes_fn = 'data\\class-descriptions.csv'
-    images_w_url = 'data\\images.csv'
+    oid_data = gen_full_path('data', 'annotations-machine.csv')
+    classes_fn = gen_full_path('data', 'class-descriptions.csv')
+    # images_w_url = 'data\\images.csv'
 
-    # Mapping between class lable and class name
+    # classes_display_name - 
+    # Mapping between class id (label) and class name 
+    # class_name_to_class_id -
+    # Mapping between class name to class id (label)
     classes_display_name, class_name_to_class_id = util.load_display_names(classes_fn)
     # id_url = util.image_to_url(images_w_url)
     annotations = pd.read_csv(oid_data)
-    img_to_labels = util.image_to_labels(annotations)
+    img_to_labels, freq_labels = util.image_to_labels(annotations, vocabolary_threshold)
 
     # Return a dictionary with mapping between each Node and its childern nodes.
     # Use for each node the class label
-    chow_liu_tree = chow_lio_model(img_to_labels, classes_display_name)
+    chow_liu_tree = chow_lio_model(img_to_labels, freq_labels)
 
     for name in ["Face", "Sports", "Vehicle"]:
         root = class_name_to_class_id[name]
@@ -33,8 +41,9 @@ def main():
         extract_sub_graph(chow_liu_tree, root, sub_tree, marked)
         vis.plot_network(sub_tree, classes_display_name, name)
 
-    # vis.plot_network(sub_tree, classes_display_name)
+    vis.plot_network(chow_liu_tree, classes_display_name)
 
+# extract sub graph of a given a root. 'level' defines the traversal depth 
 def extract_sub_graph(graph, root, sub_graph, marked, level=2):
     if level == 0:
         return
@@ -47,18 +56,20 @@ def extract_sub_graph(graph, root, sub_graph, marked, level=2):
         sub_graph[root].append(child)
         extract_sub_graph(graph, child, sub_graph, marked, level - 1)
 
-def chow_lio_model(img_to_labels, classes_display_name):
+# Build the chow liu graph
+# Return max spanning tree
+def chow_lio_model(img_to_labels, freq_labels):
     label_to_ind = dict() # label is the class id
 
     ind = 0
     ind_to_label = []
-    for lbl, _ in classes_display_name.items():
+    for lbl in freq_labels:
         label_to_ind[lbl] = ind
         ind_to_label.append(lbl)
         ind += 1
 
     num_images = len(img_to_labels)
-    num_labels = len(classes_display_name)
+    num_labels = len(freq_labels)
 
     weighted_graph = np.array(np.zeros((num_labels, num_labels), dtype=float))
     

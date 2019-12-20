@@ -37,15 +37,27 @@ def image_to_url(images_path):
 
 
 # Parse a DF (data frame) into a dict {image -> associated labels}
-def image_to_labels(annotations):
+def image_to_labels(annotations, vocab_threshold):
+    freq_labels = build_freq_labels(annotations, vocab_threshold)
     img_to_labels, col_name = defaultdict(list), 'ImageID'
     images = annotations[col_name].unique().tolist()
     for i in range(len(annotations)):
-        img_id = annotations[col_name][i]
         label = annotations['LabelName'][i]
-        img_to_labels[img_id].append(label)
-    return img_to_labels
+        if label in freq_labels:
+            img_id = annotations[col_name][i]
+            img_to_labels[img_id].append(label)
+    return img_to_labels, freq_labels
 
+# Return 'vocan_treshold' most frequent labels 
+def build_freq_labels(annotations, vocab_threshold):
+    labels_count = defaultdict(int)
+    freq_labels = set()
+    for i in range(len(annotations)):
+        label = annotations['LabelName'][i]
+        labels_count[label] += 1
+    freq_labels = sorted(labels_count.items(), key=lambda x: x[1], reverse=True)
+    freq_labels = freq_labels[:vocab_threshold]
+    return [label for label, _ in freq_labels]
 
 # Load train, test, validation image - url files into df.
 def load_urls_to_df(path_train, path_val, path_test):
