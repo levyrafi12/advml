@@ -1,0 +1,35 @@
+EX4 Q 1
+By Mark Rozanov 314059098, Roei Schuster 300642410, Rafi Levy 057931354
+
+Source files:
+
+variational_autoencoder.py
+conv_arch.py
+
+Output Files:
+Q1 c)
+QuestC.png (visualization of test latent space) 
+QuestC_table.txt - digit to its corresponding mapping in latent space
+
+Q1 d) QuestD.png - latent space to an image
+
+Q1 e) QuestE.png - latent space to sequence of images
+
+Q1 f) Repeat running on zero log variance
+QuestF_c.png
+QuestF_d.png
+QuestF_e.png
+QuestF_c_table.txt
+
+Q1 g) ConvNet architecture
+QuestG_c.png
+QuestG_d.png
+QuestG_e.png
+QuestG_c_table.txt
+
+Running Commands:
+Q1 c-e) python variational_autoencoder.py
+Q1 f) python variational_autoencoder.py -q f
+Q1 g) python conv_arch.py 
+
+path in nova ~levyrafi/courses/advml/ex4
