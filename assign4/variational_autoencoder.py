@@ -79,13 +79,13 @@ vae.fit(x_train,
         batch_size=batch_size,
         validation_data=(x_test, None))
 
-##### my code ######
+#---------- My Code -----------#
 
 def run_encoding():
 	encoder = Model(x, z)
 	return encoder.predict(x_test)
 
-def QuestC(fig_name):
+def QuestC(q_sym):
 	test_latent = run_encoding()
 
 	fig, ax = plt.subplots()
@@ -94,7 +94,9 @@ def QuestC(fig_name):
 
 	fig.colorbar(scatter)
 	ax.grid()
-	ax.set_title('Test Set in Latent Space')
+	title = "({}) {}".format(q_sym, 'Test Set in Latent Space')
+	ax.set_title(title)
+	fig_name = "Question{}".format(q_sym)
 	fig.savefig(fig_name)
 	# plt.show()
 
@@ -108,17 +110,19 @@ def build_generator():
 	_x_decoded_mean = decoder_mean(_h_decoded)
 	return Model(decoder_input, _x_decoded_mean)
 
-def QuestD(fig_name):
+def QuestD(q_sym):
 	generator = build_generator()
 	z_sample = np.array([[0.5, 0.2]])
 	x_decoded = generator.predict(z_sample)
 	fig, ax = plt.subplots()
 	ax.imshow(x_decoded.reshape(28, 28))
-	ax.set_title('Generated Digit')
+	title = "({}) {}".format(q_sym, 'Generated Digit')
+	ax.set_title(title)
+	fig_name = "Question{}".format(q_sym)
 	fig.savefig(fig_name)
 	# plt.show()
 
-def QuestE(fig_name):
+def QuestE(q_sym):
 	test_latent = run_encoding()
 
 	x1, y1 = test_latent[np.argmax(y_test == 0)]
@@ -138,10 +142,12 @@ def QuestE(fig_name):
 		plt.subplot(2,5,i + 1)
 		plt.imshow(x_decoded.reshape(28,28))
 		if i == 2:
-			plt.title('Generated Images')
+			title = "({}) {}".format(q_sym, 'Image Sequence')
+			plt.title(title)
 
+	fig_name = "Question{}".format(q_sym)
 	plt.savefig(fig_name)
-	plt.show()
+	# plt.show()
 
 def parse_args(argv):
 	if len(argv) < 2:
@@ -164,15 +170,16 @@ def parse_args(argv):
 	return qname
 
 if __name__ == '__main__':
-	figure_names = ['QuestionC','QuestionD','QuestionE']
+	
+	q_sym = ['C', 'D', 'E']
 	qname = parse_args(sys.argv)
 	if qname == 'f': 
 		q_log_var = np.zeros(latent_dim) # question f
-		figure_names = ['QuestionF_c','QuestionF_d','QuestionF_e']
+		q_sym = ['F_c', 'F_d', 'F_e']
 
-	QuestC(figure_names[0])
-	QuestD(figure_names[1])
-	QuestE(figure_names[2])
+	QuestC(q_sym[0])
+	QuestD(q_sym[1])
+	QuestE(q_sym[2])
 
 
 

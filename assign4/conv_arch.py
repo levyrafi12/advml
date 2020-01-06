@@ -42,7 +42,6 @@ x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
 x = MaxPooling2D((2, 2), padding='same')(x)
 # shape info needed to build decoder model
 shape = K.int_shape(x) 
-print(shape)
 # generate latent vector Q(z|X)
 x = Flatten()(x)
 x = Dense(intermediate_dim, activation='relu')(x)
@@ -95,7 +94,7 @@ def run_encoding():
 	encoder = Model(inputs, z)
 	return encoder.predict(x_test)
 
-def QuestC(fig_name):
+def QuestC():
 	test_latent = run_encoding()
 
 	fig, ax = plt.subplots()
@@ -104,24 +103,24 @@ def QuestC(fig_name):
 
 	fig.colorbar(scatter)
 	ax.grid()
-	ax.set_title('Test Set in Latent Space')
-	fig.savefig(fig_name)
+	ax.set_title('(G_c) Test Set in Latent Space')
+	fig.savefig("QuestionG_c")
 	# plt.show()
 
 	for i in range(10):
 		lat_image = test_latent[np.argmax(y_test == i)]
 		print("Digit {} Latent Space Coord. {}".format(i, lat_image))
 
-def QuestD(fig_name):
+def QuestD():
 	z_sample = np.array([[0.5, 0.2]])
 	x_decoded = decoder.predict(z_sample)
 	fig, ax = plt.subplots()
 	ax.imshow(x_decoded.reshape(28, 28))
-	ax.set_title('Generated Digit')
-	fig.savefig(fig_name)
+	ax.set_title('(G_d) Generated Digit')
+	fig.savefig("QuestionG_d")
 	# plt.show()
 
-def QuestE(fig_name):
+def QuestE():
 	test_latent = run_encoding()
 
 	x1, y1 = test_latent[np.argmax(y_test == 0)]
@@ -144,12 +143,12 @@ def QuestE(fig_name):
 		concat_images = np.concatenate((concat_images, x_decoded_list[i].reshape(28,28)), axis=1)
 		plt.imshow(concat_images)
 
-	plt.title('Generated Images')
-	plt.savefig(fig_name)
-	plt.show()
+	plt.title('(G_e) Image Sequence')
+	plt.savefig("QuestionG_e")
+	# plt.show()
 
 if __name__ == '__main__':
-	QuestC('QuestionG_c')
-	QuestD('QuestionG_d')
-	QuestE('QuestionG_e')
+	QuestC()
+	QuestD()
+	QuestE()
 
